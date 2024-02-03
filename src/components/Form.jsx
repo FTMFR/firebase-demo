@@ -18,6 +18,8 @@ const Form = () => {
       method: "POST",
       body: JSON.stringify(userInfo),
     }).then((res) => console.log(res));
+
+    
   };
 
 
