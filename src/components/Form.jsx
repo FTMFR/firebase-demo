@@ -3,9 +3,9 @@ import React, { useState } from "react";
 const Form = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [email, setEmailName] = useState("");
+  const [email, setEmail] = useState("");
 
-  const registerHandler = (e) => {
+  const registerHandler = async (e) => {
     e.preventDefault();
 
     const userInfo = {
@@ -13,15 +13,24 @@ const Form = () => {
       lastName,
       email,
     };
+    try {
+      const response = await fetch(
+        "https://fir-demo-8d3af-default-rtdb.firebaseio.com/usersInfo.json",
+        {
+          method: "POST",
+          body: JSON.stringify(userInfo),
+        }
+      );
+      const data = await response.json();
+      console.log(data);
+    } catch (error) {
+      console.error("Error:", error);
+    }
 
-    fetch("https://fir-demo-8d3af-default-rtdb.firebaseio.com/usersInfo.json", {
-      method: "POST",
-      body: JSON.stringify(userInfo),
-    }).then((res) => console.log(res));
-
-    
+    setFirstName("");
+    setLastName("");
+    setEmail("");
   };
-
 
   return (
     <div className="bgc-green">
@@ -42,7 +51,7 @@ const Form = () => {
           type="email"
           placeholder="Email Address"
           value={email}
-          onChange={(e) => setEmailName(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <button>Register</button>
       </form>

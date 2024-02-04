@@ -1,41 +1,82 @@
 import React, { useEffect, useState } from "react";
-import { Button, Modal, Table } from "react-bootstrap";
+import { Button, Form, Modal, Table } from "react-bootstrap";
 import { MdDelete } from "react-icons/md";
 import { MdEditDocument } from "react-icons/md";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
-  const [modal, setModal] = useState(false);
+  const [deletemodal, setDeleteModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
   const [specificUser, setSpecificUser] = useState("");
   const [getData, setGetData] = useState(false);
 
-  useEffect(async () => {
-   await fetch("https://fir-demo-8d3af-default-rtdb.firebaseio.com/usersInfo.json")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data);
-        setUsers(Object.entries(data));
-      });
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(
+          "https://fir-demo-8d3af-default-rtdb.firebaseio.com/usersInfo.json"
+        );
+        if (response.ok) {
+          const data = await response.json();
+          console.log(data);
+          setUsers(Object.entries(data));
+        } else {
+          console.log(response);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchData();
   }, [getData]);
 
-  const deleteHandler = (e) => {
-    setModal(true);
-    setSpecificUser(e.target.value);
-  };
+  useEffect(() => {
+    const mainUserInfo = users.find((user) => user[0] === specificUser);
 
-  const removeHandler = async (e) => {
-    console.log(e.target);
+    if (mainUserInfo) {
+      setFirstName(mainUserInfo[1].firstName);
+      setLastName(mainUserInfo[1].lastName);
+      setEmail(mainUserInfo[1].email);
+    }
+  }, [specificUser]);
 
+  const removeHandler = async () => {
     await fetch(
       `https://fir-demo-8d3af-default-rtdb.firebaseio.com/usersInfo/${specificUser}.json`,
       {
         method: "DELETE",
       }
-    ).then((res) => res.json());
+    ).then((res) => console.log(res));
 
-    setModal(false);
+    setDeleteModal(false);
 
     setGetData((prevState) => !prevState);
+  };
+
+  const editHandler = async () => {
+    const usersInfo = {
+      firstName,
+      lastName,
+      email,
+    };
+
+    console.log('log this');
+
+    await fetch(
+      `https://fir-demo-8d3af-default-rtdb.firebaseio.com/usersInfo/${specificUser}.json`,
+      {
+        method: "PUT",
+        body: JSON.stringify(usersInfo),
+      }
+    ).then((res) => console.log(res));
+
+    setEditModal(false);
+    setGetData((prev) => !prev);
   };
 
   return (
@@ -58,15 +99,27 @@ const Users = () => {
               <td>{user[1].lastName}</td>
               <td>{user[1].email}</td>
               <td style={{ cursor: "pointer" }}>
-                <MdDelete value={user[0]} onClick={(e) => deleteHandler(e)} />
-                <MdEditDocument />
+                <MdDelete
+                  value={user[0]}
+                  onClick={() => {
+                    setDeleteModal(true);
+                    setSpecificUser(user[0]);
+                  }}
+                />
+                <MdEditDocument
+                  onClick={() => {
+                    setEditModal(true);
+                    setSpecificUser(user[0]);
+                  }}
+                />
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
 
-      <Modal className="modal" show={modal}>
+      {/* delete Deletemodal */}
+      <Modal className="Deletemodal" show={deletemodal}>
         <Modal.Header closeButton>
           <Modal.Title>Delete Confirm</Modal.Title>
         </Modal.Header>
@@ -76,14 +129,61 @@ const Users = () => {
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setModal(false)}>
+          <Button variant="secondary" onClick={() => setDeleteModal(false)}>
             No
           </Button>
-          <Button
-            variant="primary"
-            onClick={(e) => removeHandler(e.target.value)}
-          >
+          <Button variant="primary" onClick={() => removeHandler()}>
             Yes
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* edit Deletemodal */}
+      <Modal className="Deletemodal" show={editModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Confirm</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <p>Are You Sure to Edit?</p>
+
+          <Form>
+            <Form.Group className="mb-3" controlId="formBasicPassword">
+              <Form.Label>First Name:</Form.Label>
+              <Form.Control
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                type="text"
+                placeholder="Enter First Name"
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="formBasicPassword">
+              <Form.Label>Last Name:</Form.Label>
+              <Form.Control
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                type="text"
+                placeholder="Enter Last Name"
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="formBasicEmail">
+              <Form.Label>Email address</Form.Label>
+              <Form.Control
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                placeholder="Enter email"
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setEditModal(false)}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={() => editHandler()}>
+            Edit
           </Button>
         </Modal.Footer>
       </Modal>
